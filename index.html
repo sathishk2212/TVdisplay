@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tezo Greeting Image Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Bebas Neue (date). To self-host instead, drop BebasNeue-Regular.woff into /fonts and swap this for an @font-face. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Gilroy";font-weight:500;src:url("fonts/Gilroy-Medium.woff") format("woff"),url("fonts/Gilroy-Medium.ttf") format("truetype")}
+@font-face{font-family:"Gilroy";font-weight:700;src:url("fonts/Gilroy-Bold.woff") format("woff"),url("fonts/Gilroy-Bold.ttf") format("truetype")}
+@font-face{font-family:"Parkinsans";font-weight:700;src:url("fonts/Parkinsans-Bold.woff") format("woff"),url("fonts/Parkinsans-Bold.ttf") format("truetype")}
+
+:root{--purple:#4B3BA7;--red:#EB4D5E;--beige:#F5E6D3;--ink:#222;--line:#E3D8C8}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Gilroy",system-ui,sans-serif;font-weight:500;color:var(--ink);background:#FBF6EF;min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+h1{font-weight:700;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.03em;margin:0 0 8px;color:var(--purple)}
+p.sub{margin:0 0 36px;font-size:1.1rem;color:#555}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.card{border:2px solid var(--ink);border-radius:20px;padding:28px;text-align:left;cursor:pointer;font:inherit;color:inherit;background:var(--beige);transition:transform .15s}
+.card:nth-child(1){background:var(--red);color:#fff;border-color:var(--red)}
+.card:hover{transform:translateY(-4px)}
+.card:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--purple);outline-offset:3px}
+.card b{display:block;font-size:2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.back{background:none;border:0;font:inherit;font-weight:700;color:var(--purple);cursor:pointer;padding:0;margin-bottom:20px}
+form{display:grid;gap:18px;max-width:520px}
+label{display:grid;gap:6px;font-weight:700}
+input{font:inherit;font-weight:500;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:#fff}
+.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:14px 26px;background:var(--purple);color:#fff;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:wait}
+.msg{color:#B3261E;font-weight:700;min-height:1.2em}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:24px;margin-top:40px}
+.res{display:grid;gap:12px;justify-items:start}
+.res canvas{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="home">
+    <h1>Make a greeting image</h1>
+    <p class="sub">Pick a template, fill in the details, and download a 3840×2160 image.</p>
+    <div class="cards">
+      <button class="card" data-go="birthday"><b>Birthday</b>Name, date and photo. You get 4 colour versions.</button>
+      <button class="card" data-go="anniversary"><b>Work anniversary</b>Name, designation and photo.</button>
+    </div>
+  </section>
+
+  <section id="birthday" hidden>
+    <button class="back" data-go="home">Back</button>
+    <h1>Birthday</h1>
+    <form data-type="birthday">
+      <label>Name<input name="name" required maxlength="40" autocomplete="off"></label>
+      <label>Date<input name="date" type="date" required></label>
+      <label>Photo<input name="photo" type="file" accept="image/*" required></label>
+      <div class="msg" role="alert"></div>
+      <button class="btn" type="submit">Generate images</button>
+    </form>
+    <div class="results"></div>
+  </section>
+
+  <section id="anniversary" hidden>
+    <button class="back" data-go="home">Back</button>
+    <h1>Work anniversary</h1>
+    <form data-type="anniversary">
+      <label>Name<input name="name" required maxlength="40" autocomplete="off"></label>
+      <label>Designation<input name="designation" required maxlength="50" autocomplete="off"></label>
+      <label>Photo<input name="photo" type="file" accept="image/*" required></label>
+      <div class="msg" role="alert"></div>
+      <button class="btn" type="submit">Generate image</button>
+    </form>
+    <div class="results"></div>
+  </section>
+
+</div>
+
+<script>
+/* ============ CONFIG (all values in 3840x2160 canvas pixels) ============ */
+const W = 3840, H = 2160, PREVIEW_SCALE = 0.3;
+const PURPLE = '#4B3BA7';
+
+/* Text specs from Figma. x/y = Figma X/Y (for rotated layers Figma reports the
+   rotated bounding box's top-left, which drawText() accounts for).
+   rot = Figma rotation in degrees (positive = counter-clockwise).
+   lh = line height px, ls = letter spacing as a fraction of font size.
+   dx / dy = manual nudges in px if a font renders slightly off versus Figma. */
+const TEXT = {
+  bdayDate: { x:545, y:543,  w:435,  h:90,  rot:0,    family:'"Bebas Neue", Impact, sans-serif', weight:400, size:135, lh:90, ls:-0.04, align:'left',   color:PURPLE, dx:0, dy:0 },
+  bdayName: { x:554, y:1353, w:1140, h:104, rot:0,    family:'Gilroy, sans-serif',       weight:700, size:148, lh:80, ls:-0.04, align:'left',   color:PURPLE, dx:0, dy:0 },
+  waName:   { x:376, y:1264, w:1484, h:133, rot:4.53, family:'Parkinsans, sans-serif',   weight:700, size:190, lh:80, ls:-0.06, align:'center', color:'#000', dx:0, dy:33, space:0.3, fit:1380 },
+  waDesig:  { x:955, y:1557, w:346,  h:39,  rot:4.53, family:'Gilroy, sans-serif',       weight:500, size:55,  lh:80, ls:-0.01, align:'center', color:'#000', dx:8, dy:-22, space:0.3 }
+};
+
+/* Photo boxes. Birthday: 1496x1496 centred on the circular cut-out in the template.
+   Anniversary: Figma box, plus a small bleed so no edge of the cut-out is left empty
+   (the opaque template frame hides the overlap). */
+const PHOTO = {
+  birthday:    { x:1946.5, y:382.5, w:1496, h:1496 },
+  anniversary: { x:2181-30, y:389-30, w:1201+60, h:1262+60 }
+};
+
+const BDAY_VARIANTS = [
+  { id:'red',   label:'Red',   src:'tezoredbg.png' },
+  { id:'beige', label:'Beige', src:'tezobeigebg.png' },
+  { id:'blue',  label:'Blue',  src:'tezobluebg.png' },
+  { id:'lilac', label:'Lilac', src:'tezolilacbg.png' }
+];
+const WA_SRC = 'WA-bg-light.png';
+
+/* ============ HELPERS ============ */
+const $ = (s, r=document) => r.querySelector(s);
+const hasLS = 'letterSpacing' in CanvasRenderingContext2D.prototype;
+const cache = {};
+const loadImg = src => cache[src] || (cache[src] = new Promise((res, rej) => {
+  const i = new Image();
+  i.onload = () => res(i);
+  i.onerror = () => rej(new Error('Could not load ' + src));
+  i.src = src;
+}));
+const loadFile = file => new Promise((res, rej) => {
+  const url = URL.createObjectURL(file), i = new Image();
+  i.onload = () => res(i);
+  i.onerror = () => rej(new Error('That photo could not be read. Try a JPG or PNG.'));
+  i.src = url;
+});
+const loadFonts = () => Promise.all([
+  '400 135px "Bebas Neue"', '700 148px Gilroy', '500 55px Gilroy', '700 190px Parkinsans'
+].map(f => document.fonts.load(f, 'Aa0')));
+
+const measure = (ctx, t, ls) => hasLS ? ctx.measureText(t).width
+  : [...t].reduce((a, c) => a + ctx.measureText(c).width + ls, 0);
+function paint(ctx, t, x, y, ls) {
+  if (hasLS) return ctx.fillText(t, x, y);
+  for (const c of t) { ctx.fillText(c, x, y); x += ctx.measureText(c).width + ls; }
+}
+
+function drawText(ctx, text, s) {
+  const th = s.rot * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+  // centre of the (possibly rotated) layer, from Figma's bounding-box X/Y
+  const cx = s.x + (s.w * c + s.h * sn) / 2, cy = s.y + (s.w * sn + s.h * c) / 2;
+  let size = s.size;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-th);                       // Figma: positive = counter-clockwise
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = s.color;
+  const setFont = () => {
+    ctx.font = `${s.weight} ${size}px ${s.family}`;
+    if (hasLS) ctx.letterSpacing = (s.ls * size) + 'px';
+  };
+  // Words are laid out one by one so the gap between them stays readable
+  // even with tight (negative) letter spacing.
+  const words = text.split(/\s+/).filter(Boolean);
+  const layout = () => {
+    const gap = (s.space ?? 0.25) * size;
+    const ws = words.map(w => measure(ctx, w, s.ls * size));
+    return { ws, gap, total: ws.reduce((a, b) => a + b, 0) + gap * (words.length - 1) };
+  };
+  setFont();
+  let L = layout();
+  while (L.total > (s.fit ?? s.w) && size > 12) { size -= 2; setFont(); L = layout(); }
+  const m = ctx.measureText('Hg');
+  const asc = m.fontBoundingBoxAscent, desc = m.fontBoundingBoxDescent;
+  const base = -s.h / 2 + (s.lh - (asc + desc)) / 2 + asc + s.dy;   // top-aligned in a line box of height lh
+  let left = -s.w / 2 + s.dx;
+  if (s.align === 'center') left += (s.w - L.total) / 2;
+  let x = left;
+  words.forEach((w, i) => { paint(ctx, w, x, base, s.ls * size); x += L.ws[i] + L.gap; });
+  ctx.restore();
+}
+
+function drawCover(ctx, img, b) {
+  const r = Math.max(b.w / img.width, b.h / img.height), sw = b.w / r, sh = b.h / r;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
+  ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, b.x, b.y, b.w, b.h);
+  ctx.restore();
+}
+
+/* Layer order: white base, user photo, template, text */
+function render(canvas, scale, { bg, photo, photoBox, texts }) {
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  drawCover(ctx, photo, photoBox);
+  ctx.drawImage(bg, 0, 0, W, H);       // always stretched to exactly 3840x2160
+  texts.forEach(([t, s]) => drawText(ctx, t, s));
+}
+
+function download(job, filename, btn) {
+  const full = document.createElement('canvas');
+  render(full, 1, job);                 // full 3840x2160 render
+  try {
+    full.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      btn.disabled = false; btn.textContent = 'Download 4K image';
+    }, 'image/png');
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Download 4K image';
+    alert('The browser blocked the download. Open this page through a web server (for example VS Code Live Server) instead of double-clicking the file.');
+  }
+}
+
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'greeting';
+const fmtDate = v => v.split('-').reverse().join('.');     // 2026-03-19 -> 19.03.2026
+
+function addResult(box, job, label, filename) {
+  const el = document.createElement('div'); el.className = 'res';
+  const cv = document.createElement('canvas');
+  const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Download 4K image';
+  btn.onclick = () => { btn.disabled = true; btn.textContent = 'Preparing…'; setTimeout(() => download(job, filename, btn), 30); };
+  el.append(cv, btn); box.append(el);
+  render(cv, PREVIEW_SCALE, job);
+  cv.setAttribute('aria-label', label);
+}
+
+/* ============ NAVIGATION + FORMS ============ */
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (!go) return;
+  document.querySelectorAll('section').forEach(s => s.hidden = s.id !== go.dataset.go);
+  window.scrollTo(0, 0);
+});
+
+document.querySelectorAll('form').forEach(form => form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const type = form.dataset.type, msg = $('.msg', form), btn = $('.btn', form);
+  const box = form.parentElement.querySelector('.results');
+  const f = new FormData(form), name = f.get('name').trim().toUpperCase();
+  msg.textContent = ''; btn.disabled = true; box.innerHTML = '';
+  try {
+    await loadFonts();
+    const photo = await loadFile(f.get('photo'));
+    if (type === 'birthday') {
+      const date = fmtDate(f.get('date'));
+      for (const v of BDAY_VARIANTS) {
+        const job = { bg: await loadImg(v.src), photo, photoBox: PHOTO.birthday,
+                      texts: [[date, TEXT.bdayDate], [name, TEXT.bdayName]] };
+        addResult(box, job, `Birthday image, ${v.label}`, `birthday-${slug(name)}-${v.id}.png`);
+      }
+    } else {
+      const job = { bg: await loadImg(WA_SRC), photo, photoBox: PHOTO.anniversary,
+                    texts: [[name, TEXT.waName], [f.get('designation').trim().toUpperCase(), TEXT.waDesig]] };
+      addResult(box, job, 'Work anniversary image', `work-anniversary-${slug(name)}.png`);
+    }
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    msg.textContent = err.message;
+  }
+  btn.disabled = false;
+}));
+</script>
+</body>
+</html>
