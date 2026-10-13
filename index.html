@@ -3,260 +3,670 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tezo Greeting Image Generator</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Bebas Neue (date). To self-host instead, drop BebasNeue-Regular.woff into /fonts and swap this for an @font-face. -->
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<title>Wishes generator</title>
 <style>
-@font-face{font-family:"Gilroy";font-weight:500;src:url("fonts/Gilroy-Medium.woff") format("woff"),url("fonts/Gilroy-Medium.ttf") format("truetype")}
-@font-face{font-family:"Gilroy";font-weight:700;src:url("fonts/Gilroy-Bold.woff") format("woff"),url("fonts/Gilroy-Bold.ttf") format("truetype")}
-@font-face{font-family:"Parkinsans";font-weight:700;src:url("fonts/Parkinsans-Bold.woff") format("woff"),url("fonts/Parkinsans-Bold.ttf") format("truetype")}
+/* ---------- Fonts (paths relative to index.html) ---------- */
+@font-face { font-family: "GilroyExtraBold";   src: url("fonts/Gilroy-ExtraBold.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "GilroySemiBold";    src: url("fonts/Gilroy-SemiBold.woff2")  format("woff2"); font-display: block; }
+@font-face { font-family: "GilroyRegular";     src: url("fonts/Gilroy-Regular.woff2")   format("woff2"); font-display: block; }
+@font-face { font-family: "ParkinsansBold";    src: url("fonts/Parkinsans-Bold.woff2")     format("woff2"); font-display: block; }
+@font-face { font-family: "ParkinsansSemiBold";src: url("fonts/Parkinsans-SemiBold.woff2") format("woff2"); font-display: block; }
 
-:root{--purple:#4B3BA7;--red:#EB4D5E;--beige:#F5E6D3;--ink:#222;--line:#E3D8C8}
-*{box-sizing:border-box}
-body{margin:0;font-family:"Gilroy",system-ui,sans-serif;font-weight:500;color:var(--ink);background:#FBF6EF;min-height:100vh}
-.wrap{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
-h1{font-weight:700;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.03em;margin:0 0 8px;color:var(--purple)}
-p.sub{margin:0 0 36px;font-size:1.1rem;color:#555}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{border:2px solid var(--ink);border-radius:20px;padding:28px;text-align:left;cursor:pointer;font:inherit;color:inherit;background:var(--beige);transition:transform .15s}
-.card:nth-child(1){background:var(--red);color:#fff;border-color:var(--red)}
-.card:hover{transform:translateY(-4px)}
-.card:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--purple);outline-offset:3px}
-.card b{display:block;font-size:2rem;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
-.back{background:none;border:0;font:inherit;font-weight:700;color:var(--purple);cursor:pointer;padding:0;margin-bottom:20px}
-form{display:grid;gap:18px;max-width:520px}
-label{display:grid;gap:6px;font-weight:700}
-input{font:inherit;font-weight:500;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:#fff}
-.btn{font:inherit;font-weight:700;border:0;border-radius:999px;padding:14px 26px;background:var(--purple);color:#fff;cursor:pointer}
-.btn:disabled{opacity:.6;cursor:wait}
-.msg{color:#B3261E;font-weight:700;min-height:1.2em}
-.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:24px;margin-top:40px}
-.res{display:grid;gap:12px;justify-items:start}
-.res canvas{width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
-[hidden]{display:none!important}
+/* ---------- UI (dark) ---------- */
+:root {
+  color-scheme: dark;
+  --bg: #0e1116;
+  --panel: #151922;
+  --panel-2: #1b202b;
+  --line: #272d3a;
+  --text: #e9e7e2;
+  --muted: #8d95a6;
+  --accent: #e9b46a;
+  --accent-ink: #1a1305;
+  --danger: #f08a7e;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+}
+header.top { padding: 28px 32px 8px; max-width: 1360px; margin: 0 auto; }
+header.top h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+header.top p { margin: 4px 0 0; color: var(--muted); }
+
+main {
+  max-width: 1360px; margin: 0 auto; padding: 20px 32px 48px;
+  display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 24px; align-items: start;
+}
+@media (max-width: 980px) { main { grid-template-columns: 1fr; padding: 16px; } header.top { padding: 20px 16px 0; } }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+
+.tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 20px; }
+.tabs button { background: transparent; color: var(--muted); border: 0; padding: 10px; border-radius: 7px; font: inherit; font-weight: 600; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+.tabs button:focus-visible, .btn:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-weight: 600; margin-bottom: 6px; }
+.field .hint { color: var(--muted); font-size: 13px; margin-top: 5px; }
+.field .err { color: var(--danger); font-size: 13px; margin-top: 5px; min-height: 0; }
+.field.invalid input[type="text"], .field.invalid input[type="number"], .field.invalid input[type="date"], .field.invalid .drop { border-color: var(--danger); }
+
+input[type="text"], input[type="number"], input[type="date"] {
+  width: 100%; background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 9px; padding: 11px 12px; font: inherit;
+}
+input:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.drop {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: var(--bg); border: 1px dashed #3a4253; border-radius: 9px; padding: 10px;
+}
+.drop:hover { border-color: var(--accent); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop:focus-within { outline: 2px solid var(--accent); }
+.drop .thumb { width: 48px; height: 48px; border-radius: 8px; background: var(--panel-2) center/cover no-repeat; flex: none; }
+.drop .t1 { font-weight: 600; }
+.drop .t2 { color: var(--muted); font-size: 13px; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { background: var(--bg); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 650; }
+
+.btn { border: 0; border-radius: 10px; padding: 13px 18px; font: inherit; font-weight: 650; cursor: pointer; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); width: 100%; margin-top: 4px; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+.btn.secondary:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Preview */
+.preview-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.preview-head .meta { color: var(--muted); font-size: 13px; }
+.stage {
+  background:
+    repeating-conic-gradient(#12161d 0% 25%, #0f1319 0% 50%) 50% / 24px 24px;
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+  min-height: 260px; display: grid; place-items: center; position: relative;
+}
+.stage canvas { display: none; width: 100%; height: auto; touch-action: none; }
+.stage.ready canvas { display: block; }
+.empty { padding: 48px 24px; text-align: center; color: var(--muted); max-width: 360px; }
+.empty strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
+.stage.ready .empty { display: none; }
+.adjust { display: none; margin-top: 14px; gap: 16px; align-items: center; flex-wrap: wrap; }
+.adjust.on { display: flex; }
+.adjust label { font-weight: 600; }
+.adjust input[type="range"] { accent-color: var(--accent); width: 200px; }
+.adjust .tip { color: var(--muted); font-size: 13px; }
+.stale { color: var(--accent); font-size: 13px; display: none; }
+.stale.on { display: inline; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--line); padding: 12px 16px; border-radius: 10px; max-width: 90vw; display: none; z-index: 10; }
+.toast.on { display: block; }
+.toast.bad { border-color: var(--danger); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <section id="home">
-    <h1>Make a greeting image</h1>
-    <p class="sub">Pick a template, fill in the details, and download a 3840×2160 image.</p>
-    <div class="cards">
-      <button class="card" data-go="birthday"><b>Birthday</b>Name, date and photo. You get 4 colour versions.</button>
-      <button class="card" data-go="anniversary"><b>Work anniversary</b>Name, designation and photo.</button>
+<header class="top">
+  <h1>Wishes generator</h1>
+  <p>Fill in the details, generate, then download the image.</p>
+</header>
+
+<main>
+  <!-- ================= FORM ================= -->
+  <section class="card" aria-label="Wish details">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-birthday" aria-selected="true" data-type="birthday">Birthday</button>
+      <button role="tab" id="tab-anniversary" aria-selected="false" data-type="anniversary">Work anniversary</button>
+    </div>
+
+    <div class="field" id="f-name">
+      <label for="name">Name</label>
+      <input type="text" id="name" maxlength="40" placeholder="e.g. Priya Sharma" autocomplete="off">
+      <div class="err"></div>
+    </div>
+
+    <!-- Birthday only -->
+    <div class="field" id="f-age" data-for="birthday">
+      <label for="age">Age</label>
+      <input type="number" id="age" min="18" max="100" inputmode="numeric" placeholder="e.g. 29">
+      <div class="hint">Used to pick the template. It is not printed on the image.</div>
+      <div class="err"></div>
+    </div>
+
+    <!-- Anniversary only -->
+    <div class="field" id="f-designation" data-for="anniversary" hidden>
+      <label for="designation">Designation</label>
+      <input type="text" id="designation" maxlength="40" placeholder="e.g. Senior Designer" autocomplete="off">
+      <div class="err"></div>
+    </div>
+    <div class="field" id="f-years" data-for="anniversary" hidden>
+      <label for="years">Years at the company</label>
+      <input type="number" id="years" min="1" max="60" inputmode="numeric" placeholder="e.g. 5">
+      <div class="err"></div>
+    </div>
+
+    <div class="field" id="f-date">
+      <label for="date" id="date-label">Birthday date</label>
+      <input type="date" id="date">
+      <div class="hint" id="date-preview"></div>
+      <div class="err"></div>
+    </div>
+
+    <div class="field" id="f-photo">
+      <label for="photo">Photo</label>
+      <label class="drop" for="photo">
+        <div class="thumb" id="thumb"></div>
+        <div>
+          <div class="t1" id="photo-name">Choose a photo</div>
+          <div class="t2">PNG or JPG. Stays on your computer.</div>
+        </div>
+        <input type="file" id="photo" accept="image/*">
+      </label>
+      <div class="err"></div>
+    </div>
+
+    <div class="field">
+      <label id="tpl-label">Template</label>
+      <div class="chips" id="chips" role="group" aria-labelledby="tpl-label"></div>
+      <div class="hint" id="tpl-hint"></div>
+    </div>
+
+    <button class="btn primary" id="generate">Generate image</button>
+  </section>
+
+  <!-- ================= PREVIEW ================= -->
+  <section class="card" aria-label="Preview">
+    <div class="preview-head">
+      <div>
+        <strong>Preview</strong>
+        <span class="meta" id="meta"></span>
+        <span class="stale" id="stale"> &nbsp;Details changed. Generate again to update.</span>
+      </div>
+      <button class="btn secondary" id="download" disabled>Download PNG</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="empty">
+        <strong>Your image will appear here</strong>
+        Add a name, date and photo, then select Generate image.
+      </div>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="adjust" id="adjust">
+      <label for="zoom">Photo zoom</label>
+      <input type="range" id="zoom" min="1" max="3" step="0.01" value="1">
+      <button class="btn secondary" id="reset-photo" type="button" style="padding:8px 12px">Reset photo</button>
+      <span class="tip">Drag the photo on the preview to reposition it.</span>
     </div>
   </section>
+</main>
 
-  <section id="birthday" hidden>
-    <button class="back" data-go="home">Back</button>
-    <h1>Birthday</h1>
-    <form data-type="birthday">
-      <label>Name<input name="name" required maxlength="40" autocomplete="off"></label>
-      <label>Date<input name="date" type="date" required></label>
-      <label>Photo<input name="photo" type="file" accept="image/*" required></label>
-      <div class="msg" role="alert"></div>
-      <button class="btn" type="submit">Generate images</button>
-    </form>
-    <div class="results"></div>
-  </section>
-
-  <section id="anniversary" hidden>
-    <button class="back" data-go="home">Back</button>
-    <h1>Work anniversary</h1>
-    <form data-type="anniversary">
-      <label>Name<input name="name" required maxlength="40" autocomplete="off"></label>
-      <label>Designation<input name="designation" required maxlength="50" autocomplete="off"></label>
-      <label>Photo<input name="photo" type="file" accept="image/*" required></label>
-      <div class="msg" role="alert"></div>
-      <button class="btn" type="submit">Generate image</button>
-    </form>
-    <div class="results"></div>
-  </section>
-
-</div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
-/* ============ CONFIG (all values in 3840x2160 canvas pixels) ============ */
-const W = 3840, H = 2160, PREVIEW_SCALE = 0.3;
-const PURPLE = '#4B3BA7';
+/* =====================================================================
+   CONFIG – everything position/style related lives here
+   ===================================================================== */
 
-/* Text specs from Figma. x/y = Figma X/Y (for rotated layers Figma reports the
-   rotated bounding box's top-left, which drawText() accounts for).
-   rot = Figma rotation in degrees (positive = counter-clockwise).
-   lh = line height px, ls = letter spacing as a fraction of font size.
-   dx / dy = manual nudges in px if a font renders slightly off versus Figma. */
-const TEXT = {
-  bdayDate: { x:545, y:543,  w:435,  h:90,  rot:0,    family:'"Bebas Neue", Impact, sans-serif', weight:400, size:135, lh:90, ls:-0.04, align:'left',   color:PURPLE, dx:0, dy:0 },
-  bdayName: { x:554, y:1353, w:1140, h:104, rot:0,    family:'Gilroy, sans-serif',       weight:700, size:148, lh:80, ls:-0.04, align:'left',   color:PURPLE, dx:0, dy:0 },
-  waName:   { x:376, y:1264, w:1484, h:133, rot:4.53, family:'Parkinsans, sans-serif',   weight:700, size:190, lh:80, ls:-0.06, align:'center', color:'#000', dx:0, dy:33, space:0.3, fit:1380 },
-  waDesig:  { x:955, y:1557, w:346,  h:39,  rot:4.53, family:'Gilroy, sans-serif',       weight:500, size:55,  lh:80, ls:-0.01, align:'center', color:'#000', dx:8, dy:-22, space:0.3 }
+// Width of your Figma frame. If your PNGs are exported at 2x, the script
+// scales every coordinate automatically (image width / DESIGN_WIDTH).
+const DESIGN_WIDTH = 1920;
+
+// Figma shows clockwise rotation as negative. Flip to 1 if tilts look wrong.
+const ROTATION_DIR = -1;
+
+// Text boxes were designed with "cap height to baseline" trim, so the box
+// bottom is the text baseline. Do not change unless you change the designs.
+
+// Helper to keep the table below compact
+const T = (x, y, w, h, rot, font, size, ls, fill, maxW, align = 'center') =>
+  ({ x, y, w, h, rot, font, size, ls, fill, maxW, align });
+
+const GOLD_GRADIENT = [[0, '#B38E64'], [0.52, '#F7DFBF'], [1, '#7D5531']];
+
+const TEMPLATES = {
+  b1: {
+    img: 'images/b1.png',
+    photo: { x: 1080, y: 157, w: 626, h: 715 },
+    fields: {
+      name: T(240.7, 558.57, 716, 70, 4.24, 'GilroyExtraBold', 100, -0.05, '#F4E1CE', 716),
+      date: T(505, 706, 187, 39, 3.78, 'GilroyExtraBold', 55, 0, '#F4E1CE', 280),
+    },
+  },
+  b2: {
+    img: 'images/b2.png',
+    photo: { x: 1019, y: 208, w: 514, h: 578 },
+    fields: {
+      name: T(203, 668, 677, 66, 0, 'GilroyExtraBold', 95, -0.04, '#F2E0D7', 677, 'left'),
+      date: T(802, 382, 105, 21, 0, 'ParkinsansBold', 30, -0.04, '#FFFFFF', 200),
+    },
+  },
+  b3: {
+    img: 'images/b3.png',
+    photo: { x: 1090, y: 208, w: 552, h: 674 },
+    fields: {
+      name: T(390, 571, 590, 52, 0, 'ParkinsansSemiBold', 85, -0.05, '#1C1B1B', 590),
+      // X was "not visible" in your specs, so this is centred under the name
+      // (name centre = 685, width 170 -> x 600). Adjust x if needed.
+      date: T(600, 685, 170, 39, 0, 'GilroySemiBold', 55, -0.05, '#281691', 260),
+    },
+  },
+  w1: {
+    img: 'images/w1.png',
+    photo: { x: 1087, y: 194, w: 602, h: 616 },
+    fields: {
+      name:        T(208.94, 631.89, 716, 70, 4.74, 'GilroyExtraBold', 100, -0.05, '#212121', 716),
+      designation: T(493, 777, 151, 21, 4.74, 'GilroyRegular', 30, -0.05, '#000000', 360),
+      years:       T(767, 487, 158, 39, 6.45, 'GilroyExtraBold', 55, -0.05, '#181A23', 260),
+    },
+    yearsWord: true,
+  },
+  w2: {
+    img: 'images/w2.png',
+    photo: { x: 1063, y: 236, w: 507, h: 603 },
+    fields: {
+      name:        T(459, 566, 501, 49, 0, 'GilroySemiBold', 70, -0.05, '#D3C1AF', 501),
+      designation: T(641, 636, 136, 19, 0, 'GilroyRegular', 27, -0.05, '#D3C1AF', 340),
+      years:       T(615, 706, 35, 42, 0, 'GilroySemiBold', 60, -0.05, '#D3C1AF', 90),
+    },
+    yearsWord: false, // "YEAR" is already printed in w2.png
+  },
+  w3: {
+    img: 'images/w3.png',
+    photo: { x: 1035, y: 201, w: 607, h: 622 },
+    fields: {
+      name:        T(356, 634, 590, 52, 0, 'ParkinsansSemiBold', 75, -0.05, GOLD_GRADIENT, 590),
+      designation: T(583, 705, 136, 19, 0, 'GilroyRegular', 27, -0.05, '#D3C1AF', 340),
+      years:       T(1554, 671, 104, 74, 0, 'GilroyExtraBold', 105, -0.05, '#000000', 130),
+    },
+    yearsWord: false, // "YEAR" is already printed in w3.png
+  },
 };
 
-/* Photo boxes. Birthday: 1496x1496 centred on the circular cut-out in the template.
-   Anniversary: Figma box, plus a small bleed so no edge of the cut-out is left empty
-   (the opaque template frame hides the overlap). */
-const PHOTO = {
-  birthday:    { x:1946.5, y:382.5, w:1496, h:1496 },
-  anniversary: { x:2181-30, y:389-30, w:1201+60, h:1262+60 }
+const TIERS = {
+  birthday: {
+    label: 'Age',
+    pick: n => (n <= 25 ? 'b1' : n <= 35 ? 'b2' : 'b3'),
+    options: [['b1', 'Fun (25 and under)'], ['b2', 'Balanced (26 to 35)'], ['b3', 'Professional (36+)']],
+  },
+  anniversary: {
+    label: 'Years',
+    pick: n => (n <= 2 ? 'w1' : n <= 6 ? 'w2' : 'w3'),
+    options: [['w1', 'Fun (1 to 2 years)'], ['w2', 'Balanced (3 to 6 years)'], ['w3', 'Professional (7+ years)']],
+  },
 };
 
-const BDAY_VARIANTS = [
-  { id:'red',   label:'Red',   src:'tezoredbg.png' },
-  { id:'beige', label:'Beige', src:'tezobeigebg.png' },
-  { id:'blue',  label:'Blue',  src:'tezobluebg.png' },
-  { id:'lilac', label:'Lilac', src:'tezolilacbg.png' }
-];
-const WA_SRC = 'WA-bg-light.png';
+const FONT_FAMILIES = ['GilroyExtraBold', 'GilroySemiBold', 'GilroyRegular', 'ParkinsansBold', 'ParkinsansSemiBold'];
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DEBUG = location.search.includes('debug'); // add ?debug to the URL to see boxes
 
-/* ============ HELPERS ============ */
-const $ = (s, r=document) => r.querySelector(s);
-const hasLS = 'letterSpacing' in CanvasRenderingContext2D.prototype;
-const cache = {};
-const loadImg = src => cache[src] || (cache[src] = new Promise((res, rej) => {
-  const i = new Image();
-  i.onload = () => res(i);
-  i.onerror = () => rej(new Error('Could not load ' + src));
-  i.src = src;
-}));
-const loadFile = file => new Promise((res, rej) => {
-  const url = URL.createObjectURL(file), i = new Image();
-  i.onload = () => res(i);
-  i.onerror = () => rej(new Error('That photo could not be read. Try a JPG or PNG.'));
-  i.src = url;
-});
-const loadFonts = () => Promise.all([
-  '400 135px "Bebas Neue"', '700 148px Gilroy', '500 55px Gilroy', '700 190px Parkinsans'
-].map(f => document.fonts.load(f, 'Aa0')));
+/* =====================================================================
+   STATE + DOM
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const canvas = $('canvas');
+const ctx = canvas.getContext('2d');
 
-const measure = (ctx, t, ls) => hasLS ? ctx.measureText(t).width
-  : [...t].reduce((a, c) => a + ctx.measureText(c).width + ls, 0);
-function paint(ctx, t, x, y, ls) {
-  if (hasLS) return ctx.fillText(t, x, y);
-  for (const c of t) { ctx.fillText(c, x, y); x += ctx.measureText(c).width + ls; }
+const state = {
+  type: 'birthday',
+  override: 'auto',      // 'auto' or a template key
+  photo: null,           // HTMLImageElement
+  zoom: 1, ox: 0, oy: 0, // photo pan/zoom (design px)
+  model: null,           // what was last generated
+};
+const imgCache = {};
+const hasLetterSpacing = 'letterSpacing' in ctx;
+
+/* =====================================================================
+   RENDERING
+   ===================================================================== */
+function loadImage(src) {
+  if (imgCache[src]) return imgCache[src];
+  imgCache[src] = new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('Could not load ' + src));
+    im.src = src;
+  });
+  return imgCache[src];
 }
 
-function drawText(ctx, text, s) {
-  const th = s.rot * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
-  // centre of the (possibly rotated) layer, from Figma's bounding-box X/Y
-  const cx = s.x + (s.w * c + s.h * sn) / 2, cy = s.y + (s.w * sn + s.h * c) / 2;
-  let size = s.size;
+async function loadFonts() {
+  await Promise.all(FONT_FAMILIES.map(f => document.fonts.load(`40px "${f}"`)));
+  await document.fonts.ready;
+}
+
+function measure(text, sizePx, spacingPx) {
+  if (hasLetterSpacing) {
+    ctx.letterSpacing = spacingPx + 'px';
+    return ctx.measureText(text).width;
+  }
+  let w = 0;
+  for (const ch of text) w += ctx.measureText(ch).width + spacingPx;
+  return w;
+}
+
+function drawText(text, x, y, spacingPx, align) {
+  // x = anchor in local coordinates, y = baseline
+  const w = measure(text, 0, spacingPx);
+  const startX = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  ctx.textAlign = 'left';
+  if (hasLetterSpacing) {
+    ctx.letterSpacing = spacingPx + 'px';
+    ctx.fillText(text, startX, y);
+  } else {
+    let cx = startX;
+    for (const ch of text) { ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + spacingPx; }
+  }
+}
+
+function drawField(f, text, S) {
+  if (!text) return;
+  const rad = ROTATION_DIR * f.rot * Math.PI / 180;
+  const cos = Math.abs(Math.cos(rad)), sin = Math.abs(Math.sin(rad));
+  // Figma X/Y of a rotated layer is its bounding box top-left, so find the centre from that
+  const cx = f.x + (f.w * cos + f.h * sin) / 2;
+  const cy = f.y + (f.w * sin + f.h * cos) / 2;
+
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(-th);                       // Figma: positive = counter-clockwise
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = s.color;
-  const setFont = () => {
-    ctx.font = `${s.weight} ${size}px ${s.family}`;
-    if (hasLS) ctx.letterSpacing = (s.ls * size) + 'px';
-  };
-  // Words are laid out one by one so the gap between them stays readable
-  // even with tight (negative) letter spacing.
-  const words = text.split(/\s+/).filter(Boolean);
-  const layout = () => {
-    const gap = (s.space ?? 0.25) * size;
-    const ws = words.map(w => measure(ctx, w, s.ls * size));
-    return { ws, gap, total: ws.reduce((a, b) => a + b, 0) + gap * (words.length - 1) };
-  };
-  setFont();
-  let L = layout();
-  while (L.total > (s.fit ?? s.w) && size > 12) { size -= 2; setFont(); L = layout(); }
-  const m = ctx.measureText('Hg');
-  const asc = m.fontBoundingBoxAscent, desc = m.fontBoundingBoxDescent;
-  const base = -s.h / 2 + (s.lh - (asc + desc)) / 2 + asc + s.dy;   // top-aligned in a line box of height lh
-  let left = -s.w / 2 + s.dx;
-  if (s.align === 'center') left += (s.w - L.total) / 2;
-  let x = left;
-  words.forEach((w, i) => { paint(ctx, w, x, base, s.ls * size); x += L.ws[i] + L.gap; });
+  ctx.rotate(rad);
+
+  // Shrink long text so it never leaves its area
+  let size = f.size;
+  ctx.font = `${size}px "${f.font}"`;
+  let w = measure(text, size, f.ls * size);
+  if (w > f.maxW) {
+    size = Math.max(f.size * 0.4, size * (f.maxW / w));
+    ctx.font = `${size}px "${f.font}"`;
+  }
+  const spacing = f.ls * size;
+
+  // Fill (solid or gradient across the text box height)
+  if (Array.isArray(f.fill)) {
+    const g = ctx.createLinearGradient(0, -f.h / 2, 0, f.h / 2);
+    f.fill.forEach(([stop, col]) => g.addColorStop(stop, col));
+    ctx.fillStyle = g;
+  } else {
+    ctx.fillStyle = f.fill;
+  }
+  ctx.textBaseline = 'alphabetic';
+  const anchorX = f.align === 'center' ? 0 : f.align === 'right' ? f.w / 2 : -f.w / 2;
+  drawText(text, anchorX, f.h / 2, spacing, f.align);
+
+  if (DEBUG) {
+    ctx.strokeStyle = 'rgba(255,0,80,.9)'; ctx.lineWidth = 2;
+    ctx.strokeRect(-f.w / 2, -f.h / 2, f.w, f.h);
+  }
   ctx.restore();
 }
 
-function drawCover(ctx, img, b) {
-  const r = Math.max(b.w / img.width, b.h / img.height), sw = b.w / r, sh = b.h / r;
+function photoMetrics(p) {
+  const img = state.photo;
+  const base = Math.max(p.w / img.naturalWidth, p.h / img.naturalHeight);
+  const sc = base * state.zoom;
+  const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+  const maxX = (dw - p.w) / 2, maxY = (dh - p.h) / 2;
+  state.ox = Math.max(-maxX, Math.min(maxX, state.ox));
+  state.oy = Math.max(-maxY, Math.min(maxY, state.oy));
+  return { dw, dh, dx: p.x + (p.w - dw) / 2 + state.ox, dy: p.y + (p.h - dh) / 2 + state.oy };
+}
+
+async function render() {
+  const m = state.model;
+  if (!m) return;
+  const tpl = TEMPLATES[m.templateKey];
+  const [bg] = await Promise.all([loadImage(tpl.img), loadFonts()]);
+
+  canvas.width = bg.naturalWidth;
+  canvas.height = bg.naturalHeight;
+  const S = bg.naturalWidth / DESIGN_WIDTH;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-  ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
-  ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, b.x, b.y, b.w, b.h);
+  ctx.scale(S, S);
+
+  // Layer 1 (bottom): user photo, clipped to the placeholder rectangle
+  const p = tpl.photo;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(p.x, p.y, p.w, p.h); ctx.clip();
+  const pm = photoMetrics(p);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(state.photo, pm.dx, pm.dy, pm.dw, pm.dh);
   ctx.restore();
+
+  // Layer 2: template image
+  ctx.restore();
+  ctx.drawImage(bg, 0, 0);
+  ctx.save();
+  ctx.scale(S, S);
+
+  // Layer 3 (top): text
+  const F = tpl.fields;
+  drawField(F.name, m.name, S);
+  if (F.date) drawField(F.date, m.dateText, S);
+  if (F.designation) drawField(F.designation, m.designation, S);
+  if (F.years) {
+    const n = m.years;
+    drawField(F.years, tpl.yearsWord ? `${n} ${n > 1 ? 'YEARS' : 'YEAR'}` : String(n), S);
+  }
+  if (DEBUG) { ctx.strokeStyle = 'cyan'; ctx.lineWidth = 3; ctx.strokeRect(p.x, p.y, p.w, p.h); }
+  ctx.restore();
+
+  $('stage').classList.add('ready');
+  $('adjust').classList.add('on');
+  $('download').disabled = false;
+  $('meta').textContent = ` · ${canvas.width} × ${canvas.height}px · template ${m.templateKey}`;
 }
 
-/* Layer order: white base, user photo, template, text */
-function render(canvas, scale, { bg, photo, photoBox, texts }) {
-  canvas.width = Math.round(W * scale);
-  canvas.height = Math.round(H * scale);
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(scale, 0, 0, scale, 0, 0);
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-  drawCover(ctx, photo, photoBox);
-  ctx.drawImage(bg, 0, 0, W, H);       // always stretched to exactly 3840x2160
-  texts.forEach(([t, s]) => drawText(ctx, t, s));
+/* =====================================================================
+   FORM LOGIC
+   ===================================================================== */
+function formatDate(iso) {
+  const [, mo, d] = iso.split('-').map(Number);
+  return `${d} ${MONTHS[mo - 1]}`;
 }
 
-function download(job, filename, btn) {
-  const full = document.createElement('canvas');
-  render(full, 1, job);                 // full 3840x2160 render
+function currentTemplateKey() {
+  const n = parseInt($(state.type === 'birthday' ? 'age' : 'years').value, 10);
+  if (state.override !== 'auto') return state.override;
+  return Number.isFinite(n) ? TIERS[state.type].pick(n) : null;
+}
+
+function refreshTemplateUI() {
+  const chips = $('chips');
+  chips.innerHTML = '';
+  const defs = [['auto', 'Auto']].concat(TIERS[state.type].options);
+  defs.forEach(([key, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = label;
+    b.setAttribute('aria-pressed', String(state.override === key));
+    b.onclick = () => { state.override = key; refreshTemplateUI(); markStale(); };
+    chips.appendChild(b);
+  });
+  const key = currentTemplateKey();
+  const base = TIERS[state.type];
+  $('tpl-hint').textContent = state.override === 'auto'
+    ? (key ? `Picked automatically from the ${base.label.toLowerCase()}.` : `Enter the ${base.label.toLowerCase()} and a template is picked automatically.`)
+    : 'Template chosen manually.';
+}
+
+function setType(type) {
+  state.type = type;
+  state.override = 'auto';
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.type === type)));
+  document.querySelectorAll('[data-for]').forEach(el => { el.hidden = el.dataset.for !== type; });
+  $('date-label').textContent = type === 'birthday' ? 'Birthday date' : 'Work anniversary date';
+  clearErrors();
+  refreshTemplateUI();
+}
+
+function setError(fieldId, msg) {
+  const f = $(fieldId);
+  f.classList.add('invalid');
+  f.querySelector('.err').textContent = msg;
+}
+function clearErrors() {
+  document.querySelectorAll('.field').forEach(f => { f.classList.remove('invalid'); const e = f.querySelector('.err'); if (e) e.textContent = ''; });
+}
+
+function validate() {
+  clearErrors();
+  let ok = true;
+  const bad = (id, msg) => { setError(id, msg); ok = false; };
+  if (!$('name').value.trim()) bad('f-name', 'Enter a name.');
+  if (state.type === 'birthday') {
+    const a = parseInt($('age').value, 10);
+    if (!Number.isFinite(a) || a < 1) bad('f-age', 'Enter a valid age.');
+  } else {
+    if (!$('designation').value.trim()) bad('f-designation', 'Enter a designation.');
+    const y = parseInt($('years').value, 10);
+    if (!Number.isFinite(y) || y < 1) bad('f-years', 'Enter 1 or more years.');
+  }
+  if (!$('date').value) bad('f-date', 'Pick a date.');
+  if (!state.photo) bad('f-photo', 'Upload a photo.');
+  return ok;
+}
+
+function toast(msg, bad) {
+  const t = $('toast');
+  t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : '');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.className = 'toast', 5000);
+}
+
+function markStale() { if (state.model) $('stale').classList.add('on'); }
+
+async function generate() {
+  if (!validate()) {
+    const first = document.querySelector('.field.invalid input, .field.invalid label.drop');
+    if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return;
+  }
+  const isB = state.type === 'birthday';
+  const n = parseInt($(isB ? 'age' : 'years').value, 10);
+  const key = state.override === 'auto' ? TIERS[state.type].pick(n) : state.override;
+
+  state.model = {
+    templateKey: key,
+    name: $('name').value.trim(),
+    dateText: formatDate($('date').value),
+    designation: isB ? '' : $('designation').value.trim(),
+    years: isB ? 0 : n,
+  };
+  $('stale').classList.remove('on');
+  const btn = $('generate'); btn.disabled = true; btn.textContent = 'Generating…';
   try {
-    full.toBlob(blob => {
+    await render();
+  } catch (e) {
+    toast(e.message + '. Check the file path and run the site from a local server.', true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Generate image';
+  }
+}
+
+function download() {
+  const m = state.model;
+  const slug = m.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'wish';
+  const fname = `${state.type === 'birthday' ? 'birthday' : 'anniversary'}-${slug}.png`;
+  try {
+    canvas.toBlob(blob => {
+      if (!blob) return toast('Could not create the image.', true);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      btn.disabled = false; btn.textContent = 'Download 4K image';
+      a.href = URL.createObjectURL(blob); a.download = fname;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }, 'image/png');
   } catch (e) {
-    btn.disabled = false; btn.textContent = 'Download 4K image';
-    alert('The browser blocked the download. Open this page through a web server (for example VS Code Live Server) instead of double-clicking the file.');
+    toast('Download blocked by the browser. Open the site through a local server (for example VS Code Live Server) instead of opening the file directly.', true);
   }
 }
 
-const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'greeting';
-const fmtDate = v => v.split('-').reverse().join('.');     // 2026-03-19 -> 19.03.2026
+/* =====================================================================
+   EVENTS
+   ===================================================================== */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { setType(b.dataset.type); markStale(); });
 
-function addResult(box, job, label, filename) {
-  const el = document.createElement('div'); el.className = 'res';
-  const cv = document.createElement('canvas');
-  const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Download 4K image';
-  btn.onclick = () => { btn.disabled = true; btn.textContent = 'Preparing…'; setTimeout(() => download(job, filename, btn), 30); };
-  el.append(cv, btn); box.append(el);
-  render(cv, PREVIEW_SCALE, job);
-  cv.setAttribute('aria-label', label);
-}
-
-/* ============ NAVIGATION + FORMS ============ */
-document.addEventListener('click', e => {
-  const go = e.target.closest('[data-go]');
-  if (!go) return;
-  document.querySelectorAll('section').forEach(s => s.hidden = s.id !== go.dataset.go);
-  window.scrollTo(0, 0);
+['name', 'age', 'designation', 'years', 'date'].forEach(id => {
+  $(id).addEventListener('input', () => {
+    $('f-' + id)?.classList.remove('invalid');
+    if (id === 'age' || id === 'years') refreshTemplateUI();
+    if (id === 'date') $('date-preview').textContent = $('date').value ? `Will show as ${formatDate($('date').value)}` : '';
+    markStale();
+  });
 });
 
-document.querySelectorAll('form').forEach(form => form.addEventListener('submit', async e => {
-  e.preventDefault();
-  const type = form.dataset.type, msg = $('.msg', form), btn = $('.btn', form);
-  const box = form.parentElement.querySelector('.results');
-  const f = new FormData(form), name = f.get('name').trim().toUpperCase();
-  msg.textContent = ''; btn.disabled = true; box.innerHTML = '';
-  try {
-    await loadFonts();
-    const photo = await loadFile(f.get('photo'));
-    if (type === 'birthday') {
-      const date = fmtDate(f.get('date'));
-      for (const v of BDAY_VARIANTS) {
-        const job = { bg: await loadImg(v.src), photo, photoBox: PHOTO.birthday,
-                      texts: [[date, TEXT.bdayDate], [name, TEXT.bdayName]] };
-        addResult(box, job, `Birthday image, ${v.label}`, `birthday-${slug(name)}-${v.id}.png`);
-      }
-    } else {
-      const job = { bg: await loadImg(WA_SRC), photo, photoBox: PHOTO.anniversary,
-                    texts: [[name, TEXT.waName], [f.get('designation').trim().toUpperCase(), TEXT.waDesig]] };
-      addResult(box, job, 'Work anniversary image', `work-anniversary-${slug(name)}.png`);
-    }
-    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (err) {
-    msg.textContent = err.message;
-  }
-  btn.disabled = false;
-}));
+$('photo').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const im = new Image();
+  im.onload = () => {
+    state.photo = im; state.zoom = 1; state.ox = 0; state.oy = 0;
+    $('zoom').value = 1;
+    $('thumb').style.backgroundImage = `url("${url}")`;
+    $('photo-name').textContent = file.name;
+    $('f-photo').classList.remove('invalid'); $('f-photo').querySelector('.err').textContent = '';
+    if (state.model) render().then(markStale);
+  };
+  im.onerror = () => toast('That file could not be read as an image.', true);
+  im.src = url;
+});
+
+$('generate').onclick = generate;
+$('download').onclick = download;
+
+// Photo zoom / drag (live re-render after the first generate)
+let raf = 0;
+const rerender = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => render()); };
+$('zoom').addEventListener('input', e => { state.zoom = parseFloat(e.target.value); rerender(); });
+$('reset-photo').onclick = () => { state.zoom = 1; state.ox = 0; state.oy = 0; $('zoom').value = 1; rerender(); };
+
+let drag = null;
+function toDesign(e) {
+  const r = canvas.getBoundingClientRect();
+  const S = canvas.width / DESIGN_WIDTH;
+  return { x: (e.clientX - r.left) * (canvas.width / r.width) / S, y: (e.clientY - r.top) * (canvas.height / r.height) / S, k: (canvas.width / r.width) / S };
+}
+function inPhoto(pt) {
+  const p = TEMPLATES[state.model.templateKey].photo;
+  return pt.x >= p.x && pt.x <= p.x + p.w && pt.y >= p.y && pt.y <= p.y + p.h;
+}
+canvas.addEventListener('pointerdown', e => {
+  if (!state.model) return;
+  const pt = toDesign(e);
+  if (!inPhoto(pt)) return;
+  drag = { cx: e.clientX, cy: e.clientY, k: pt.k };
+  canvas.setPointerCapture(e.pointerId);
+  canvas.style.cursor = 'grabbing';
+});
+canvas.addEventListener('pointermove', e => {
+  if (!state.model) return;
+  if (!drag) { canvas.style.cursor = inPhoto(toDesign(e)) ? 'grab' : 'default'; return; }
+  state.ox += (e.clientX - drag.cx) * drag.k;
+  state.oy += (e.clientY - drag.cy) * drag.k;
+  drag.cx = e.clientX; drag.cy = e.clientY;
+  rerender();
+});
+const endDrag = () => { drag = null; canvas.style.cursor = 'grab'; };
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+// Enter key submits
+document.querySelectorAll('input[type="text"], input[type="number"]').forEach(i =>
+  i.addEventListener('keydown', e => { if (e.key === 'Enter') generate(); }));
+
+/* init */
+setType('birthday');
+loadFonts();
 </script>
 </body>
 </html>
